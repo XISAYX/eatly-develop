@@ -1,34 +1,23 @@
-import { Head } from '@inertiajs/react';
-
 import AppearanceTabs from '@/components/appearance-tabs';
 import HeadingSmall from '@/components/heading-small';
-import { type BreadcrumbItem } from '@/types';
-
-import AppLayout from '@/layouts/app-layout';
-import SettingsLayout from '@/layouts/settings/layout';
-import { edit as editAppearance } from '@/routes/appearance';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Appearance settings',
-        href: editAppearance().url,
-    },
-];
+import EatlySettingsLayout from '@/layouts/settings/eatly-settings-layout';
+import { Head } from '@inertiajs/react';
 
 export default function Appearance() {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Appearance settings" />
+        <EatlySettingsLayout>
+            <Head title="Tema Visual | Ajustes EATLY" />
 
-            <SettingsLayout>
-                <div className="space-y-6">
-                    <HeadingSmall
-                        title="Appearance settings"
-                        description="Update your account's appearance settings"
-                    />
+            <div className="space-y-6">
+                <HeadingSmall
+                    title="Tema & Visualización"
+                    description="Personaliza la interfaz visual y el esquema de contrastes de tu cuenta EATLY."
+                />
+
+                <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 shadow-inner backdrop-blur-xl">
                     <AppearanceTabs />
                 </div>
-            </SettingsLayout>
-        </AppLayout>
+            </div>
+        </EatlySettingsLayout>
     );
 }

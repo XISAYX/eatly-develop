@@ -4,12 +4,17 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\TabTokenLoginResponse;
+use App\Http\Responses\TabTokenRegisterResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -20,7 +25,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponseContract::class, TabTokenLoginResponse::class);
+        $this->app->singleton(RegisterResponseContract::class, TabTokenRegisterResponse::class);
     }
 
     /**
@@ -31,6 +37,20 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = \App\Models\User::where('email', $request->email)->first();
+
+            if (! $user) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'email' => 'El correo electrónico ingresado aún no está registrado. Por favor regístrate primero.',
+                ]);
+            }
+
+            if (Auth::validate($request->only('email', 'password'))) {
+                return $user;
+            }
+        });
     }
 
     /**

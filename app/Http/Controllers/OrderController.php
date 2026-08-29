@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
-
+/**
+ * Controlador principal para el ciclo de vida de los pedidos.
+ * Gestiona la creación de órdenes, asignación de estatus y seguimiento para los comercios del campus.
+ */
 class OrderController extends Controller
 {
     /**

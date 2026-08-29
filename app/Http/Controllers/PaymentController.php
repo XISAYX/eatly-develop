@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
+/**
+ * Controlador encargado del flujo y simulación de procesamiento de pagos
+ * para concretar las órdenes dentro de la plataforma.
+ */
 
 class PaymentController extends Controller
 {

@@ -3,45 +3,43 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
+use Inertia\Response;
 
 class HomeController extends Controller
 {
-    public function welcome()
+    /**
+     * Muestra la página principal de EATLY Plaza UPP
+     */
+    public function welcome(Request $request): Response
     {
-        // Traer sucursales activas con restaurant, location e imágenes
-        $branches = Branch::with(['restaurant', 'location', 'images'])
+        $branches = Branch::with(['restaurant', 'location', 'images', 'image'])
             ->where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->take(12)
+            ->whereHas('restaurant.owner', function ($query) {
+                $query->where('role', 'merchant');
+            })
             ->get()
-            ->map(function (Branch $branch) {
-                $image = $branch->images->first();
+            ->map(function ($branch) {
+                $imageUrl = $branch->image?->url
+                    ?? $branch->images->first()?->url
+                    ?? $branch->restaurant?->image;
 
                 return [
-                    'id'              => $branch->id,
-                    'name'            => $branch->name,
-                    'restaurant_name' => $branch->restaurant?->name,
-                    'city'            => $branch->location?->city,
-                    'state'           => $branch->location?->state,
-                    'image_url'       => $image?->url,
-                    // tiempos estimados fake por ahora (15–30 min)
-                    'eta_min'         => rand(15, 20),
-                    'eta_max'         => rand(21, 30),
-                    // rating demo
-                    'rating'          => number_format(rand(42, 50) / 10, 1),
+                    'id' => $branch->id,
+                    'name' => $branch->name ?? 'Punto Gastronómico Plaza UPP',
+                    'restaurant_name' => $branch->restaurant?->name ?? 'Cocina Plaza UPP',
+                    'location' => $branch->location?->address_line ?? $branch->restaurant?->address ?? 'Plaza Gastronómica UPP',
+                    'phone' => $branch->phone ?? '771 900 0000',
+                    'schedule' => $branch->opening_hours ?? 'Lunes a Viernes - 7:00 AM a 6:00 PM',
+                    'image' => $imageUrl,
+                    'rating' => 4.8,
+                    'delivery_time' => '10-20 min',
                 ];
             });
 
         return Inertia::render('Welcome', [
-            'canLogin'       => Route::has('login'),
-            'canRegister'    => Features::enabled(Features::registration()),
-            'laravelVersion' => Application::VERSION,
-            'phpVersion'     => PHP_VERSION,
-            'branches'       => $branches,
+            'branches' => $branches,
         ]);
     }
 }

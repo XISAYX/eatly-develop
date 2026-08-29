@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use Illuminate\Http\Request;
-
+/**
+ * Controlador para la gestión del carrito de compras interactivo.
+ * Maneja la adición, actualización y eliminación de platillos en tiempo real.
+ */
 class CartController extends Controller
 {
     /**
