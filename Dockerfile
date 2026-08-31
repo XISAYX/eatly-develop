@@ -1,8 +1,18 @@
 # --- ETAPA 1: Construir el frontend con Node.js ---
 FROM node:20-alpine AS node-builder
 WORKDIR /app
+
+# Copiar archivos de configuración de dependencias primero
+COPY package.json package-lock.json* ./
+
+# Instalar dependencias limpias ignorando posibles bloqueos locales
+RUN npm ci || npm install
+
+# Copiar el resto del código fuente
 COPY . .
-RUN npm install && npm run build
+
+# Ejecutar la compilación de Vite
+RUN npm run build
 
 # --- ETAPA 2: Servidor PHP con Apache ---
 FROM php:8.2-apache
@@ -23,10 +33,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar el código del proyecto base
+# Copiar código base de PHP
 COPY . /var/www/html
 
-# IMPORTANTE: Copiar el build y el manifest recién generado desde la Etapa 1
+# Copiar el build y el manifest recién generado desde la Etapa 1
 COPY --from=node-builder /app/public/build /var/www/html/public/build
 
 # Instalar dependencias de PHP
