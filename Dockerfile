@@ -30,9 +30,8 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 
 RUN composer install --no-dev --optimize-autoloader
 
-# Limpiar node_modules previos y compilar fresco
-RUN rm -rf node_modules \
-    && npm install \
+# Instalar dependencias de Node y compilar forzando la creacion del manifest
+RUN npm install \
     && npm run build
 
 EXPOSE 80
