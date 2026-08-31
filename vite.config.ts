@@ -8,7 +8,6 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
-            ssr: 'resources/js/ssr.tsx',
             refresh: true,
         }),
         react({
@@ -23,5 +22,9 @@ export default defineConfig({
     ],
     esbuild: {
         jsx: 'automatic',
+    },
+    build: {
+        manifest: true,
+        outDir: 'public/build',
     },
 });
