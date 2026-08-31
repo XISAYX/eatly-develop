@@ -16,14 +16,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar todo el código
+# Copiar todo el código (incluyendo la carpeta public/build y los assets)
 COPY . /var/www/html
 
-# GARANTIZAR que la carpeta public/build y el manifest existan dentro del contenedor
+# GARANTIZAR que existan las carpetas necesarias dentro del contenedor
 RUN mkdir -p /var/www/html/public/build \
-    && mkdir -p /var/www/html/database
+    && mkdir -p /var/www/html/database \
+    && mkdir -p /var/www/html/storage/framework/sessions \
+    && mkdir -p /var/www/html/storage/framework/views \
+    && mkdir -p /var/www/html/storage/framework/cache
 
-# Copiar explícitamente el manifest por si Git lo ignoró al desplegar
+# Copiar explícitamente el manifest por seguridad
 COPY public/build/manifest.json /var/www/html/public/build/manifest.json
 
 RUN composer install --no-dev --optimize-autoloader
@@ -39,7 +42,9 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-CMD php artisan config:clear \
+# Generar APP_KEY si no existe, limpiar cachés y arrancar Apache
+CMD php artisan key:generate --force \
+    && php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
