@@ -1,12 +1,12 @@
 # --- ETAPA 1: Construir el frontend con Node.js ---
-FROM node:20-alpine AS node-builder
+FROM node:20 AS node-builder
 WORKDIR /app
 
-# Copiar archivos de configuración de dependencias primero
+# Copiar archivos de configuración de dependencias
 COPY package.json package-lock.json* ./
 
-# Instalar dependencias limpias ignorando posibles bloqueos locales
-RUN npm ci || npm install
+# Instalar dependencias
+RUN npm install
 
 # Copiar el resto del código fuente
 COPY . .
