@@ -34,10 +34,12 @@ RUN mkdir -p /var/www/html/database \
 # Apuntar Apache a la carpeta public de Laravel
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Instalar dependencias de PHP y compilar el frontend con Vite de forma limpia
-RUN composer install --no-dev --optimize-autoloader \
-    && npm install \
-    && npx vite build
+# Instalar dependencias de PHP y Composer
+RUN composer install --no-dev --optimize-autoloader
+
+# Instalar dependencias de Node y compilar el frontend dentro del contenedor
+RUN npm install
+RUN npm run build
 
 # Exponer el puerto 80 para la web
 EXPOSE 80
