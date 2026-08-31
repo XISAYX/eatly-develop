@@ -1,11 +1,12 @@
 # --- ETAPA 1: Construir el frontend con Node.js ---
 FROM node:20 AS node-builder
+USER root
 WORKDIR /app
 
 # Copiar archivos de configuración de dependencias
 COPY package.json package-lock.json* ./
 
-# Instalar dependencias
+# Instalar dependencias limpias
 RUN npm install
 
 # Copiar el resto del código fuente
