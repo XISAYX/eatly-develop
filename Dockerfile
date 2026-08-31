@@ -21,10 +21,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar todo el código fuente al contenedor PRIMERO
+# Copiar el código del proyecto al contenedor
 COPY . /var/www/html
 
-# Crear y asegurar permisos totales para la base de datos SQLite y storage
+# Crear carpetas de base de datos, build y storage con permisos totales
 RUN mkdir -p /var/www/html/database /var/www/html/public/build \
     && touch /var/www/html/database/database.sqlite \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
@@ -37,7 +37,7 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 # Instalar dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Instalar dependencias de Node y compilar el frontend asegurando la salida en public/build
+# Instalar dependencias de Node y compilar cliente + SSR requerido por tu config de Vite
 RUN npm install
 RUN npm run build
 
