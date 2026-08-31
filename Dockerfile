@@ -16,24 +16,24 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar todo el código
+# Copiar todo el código del proyecto
 COPY . /var/www/html
 
-# Crear directorios necesarios
+# Crear carpetas obligatorias y el archivo sqlite absoluto
 RUN mkdir -p /var/www/html/public/build \
     && mkdir -p /var/www/html/database \
     && mkdir -p /var/www/html/storage/framework/sessions \
     && mkdir -p /var/www/html/storage/framework/views \
-    && mkdir -p /var/www/html/storage/framework/cache
+    && mkdir -p /var/www/html/storage/framework/cache \
+    && touch /var/www/html/database/database.sqlite
 
 # Copiar explícitamente el manifest por seguridad
 COPY public/build/manifest.json /var/www/html/public/build/manifest.json
 
 RUN composer install --no-dev --optimize-autoloader
 
-# Crear base de datos SQLite y asignar permisos totales a Apache
-RUN touch /var/www/html/database/database.sqlite \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
+# Asignar permisos totales a Apache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
     && chmod 664 /var/www/html/database/database.sqlite
 
@@ -42,9 +42,8 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-# Asegurar la existencia de .env, generar llave, limpiar caché y arrancar Apache
-CMD if [ ! -f .env ]; then cp .env.example .env; fi \
-    && php artisan key:generate --force \
+# Forzar la ruta absoluta de SQLite mediante variable de entorno en runtime, limpiar caché y arrancar Apache
+CMD export DB_DATABASE=/var/www/html/database/database.sqlite \
     && php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
