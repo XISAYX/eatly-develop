@@ -21,23 +21,23 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar el código del proyecto al contenedor
+# Copiar todo el código fuente al contenedor PRIMERO
 COPY . /var/www/html
 
-# Crear y asegurar permisos totales para la base de datos SQLite y carpetas de almacenamiento/caché
-RUN mkdir -p /var/www/html/database \
+# Crear y asegurar permisos totales para la base de datos SQLite y storage
+RUN mkdir -p /var/www/html/database /var/www/html/public/build \
     && touch /var/www/html/database/database.sqlite \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
     && chmod 664 /var/www/html/database/database.sqlite
 
 # Apuntar Apache a la carpeta public de Laravel
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Instalar dependencias de PHP y Composer
+# Instalar dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Instalar dependencias de Node y compilar el frontend dentro del contenedor
+# Instalar dependencias de Node y compilar el frontend asegurando la salida en public/build
 RUN npm install
 RUN npm run build
 
@@ -48,6 +48,6 @@ EXPOSE 80
 CMD php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
     && chmod 664 /var/www/html/database/database.sqlite \
     && apache2-foreground
