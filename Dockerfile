@@ -13,17 +13,18 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm
 
-# Habilitar mod_rewrite de Apache
+# Habilitar mod_rewrite de Apache para Laravel
 RUN a2enmod rewrite
 
-# Instalar Composer
+# Instalar Composer globalmente
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Copiar el código del proyecto al contenedor
 COPY . /var/www/html
 
-# Crear y asegurar permisos totales para la base de datos SQLite y carpetas de caché/storage
+# Crear y asegurar permisos totales para la base de datos SQLite y carpetas de almacenamiento/caché
 RUN mkdir -p /var/www/html/database \
     && touch /var/www/html/database/database.sqlite \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
@@ -33,15 +34,15 @@ RUN mkdir -p /var/www/html/database \
 # Apuntar Apache a la carpeta public de Laravel
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Instalar dependencias y compilar frontend
+# Instalar dependencias de PHP y compilar el frontend con Vite de forma limpia
 RUN composer install --no-dev --optimize-autoloader \
     && npm install \
-    && npm run build
+    && npx vite build
 
-# Exponer el puerto 80
+# Exponer el puerto 80 para la web
 EXPOSE 80
 
-# Comando de inicio para limpiar caché y levantar Apache asegurando permisos de SQLite cada vez que encienda
+# Comando de inicio: limpia cachés, ajusta permisos y arranca Apache
 CMD php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
