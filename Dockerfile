@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# 1. Instalar dependencias del sistema, Node.js y npm directamente en Debian
+# 1. Instalar dependencias del sistema y Node.js 20
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     libpng-dev \
@@ -27,11 +27,12 @@ COPY . /var/www/html
 # 5. Instalar dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# 6. Instalar dependencias de Node y compilar los assets (genera el manifest.json)
-RUN npm install \
+# 6. FORZAR la compilación de Node dentro del contenedor para generar el manifest.json
+RUN rm -rf node_modules public/build \
+    && npm install \
     && npm run build
 
-# 7. Crear la base de datos SQLite y asignar permisos totales a Apache (www-data)
+# 7. Crear base de datos SQLite y asignar permisos totales a Apache
 RUN mkdir -p /var/www/html/database \
     && touch /var/www/html/database/database.sqlite \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
@@ -44,7 +45,7 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 # 9. Exponer el puerto 80
 EXPOSE 80
 
-# 10. Comando de inicio: limpiar cachés y arrancar Apache
+# 10. Limpiar cachés y arrancar Apache
 CMD php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
