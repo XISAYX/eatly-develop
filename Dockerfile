@@ -1,7 +1,6 @@
-# Usamos PHP 8.2 con Apache como base
 FROM php:8.2-apache
 
-# Instalamos dependencias del sistema, Node.js y herramientas necesarias
+# Instalar dependencias del sistema, Node.js y npm nativos de Debian, y herramientas
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     libpng-dev \
@@ -11,34 +10,30 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
-    gnupg
+    nodejs \
+    npm
 
-# Instalamos Node.js (versión 20.x) para compilar los assets de React / Inertia
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
-
-# Habilitamos mod_rewrite de Apache para las rutas limpias de Laravel
+# Habilitar mod_rewrite de Apache para Laravel
 RUN a2enmod rewrite
 
-# Instalamos Composer globalmente
+# Instalar Composer globalmente
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Definimos el directorio de trabajo dentro del contenedor
+# Directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiamos todo el código de tu proyecto al contenedor
+# Copiar el código del proyecto
 COPY . /var/www/html
 
-# Damos permisos correctos a las carpetas de almacenamiento y caché de Laravel
+# Permisos para almacenamiento y caché
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Apuntamos el DocumentRoot de Apache a la carpeta /public de Laravel
+# Apuntar Apache a la carpeta public de Laravel
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Instalamos dependencias de PHP y dependencias de Node, luego compilamos el frontend
+# Instalar dependencias de PHP y compilar el frontend con npm
 RUN composer install --no-dev --optimize-autoloader \
     && npm install \
     && npm run build
 
-# Exponemos el puerto 80 para la web
 EXPOSE 80
