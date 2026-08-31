@@ -1,3 +1,10 @@
+# --- ETAPA 1: Construir el frontend con Node.js ---
+FROM node:20-alpine AS node-builder
+WORKDIR /app
+COPY . .
+RUN npm install && npm run build
+
+# --- ETAPA 2: Servidor PHP con Apache ---
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
@@ -8,9 +15,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    curl \
-    nodejs \
-    npm
+    curl
 
 RUN a2enmod rewrite
 
@@ -18,15 +23,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Copiar el código del proyecto base
 COPY . /var/www/html
+
+# IMPORTANTE: Copiar el build y el manifest recién generado desde la Etapa 1
+COPY --from=node-builder /app/public/build /var/www/html/public/build
 
 # Instalar dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader
-
-# Forzar la instalación limpia de Node y compilar el proyecto dentro de Render para que nazca el manifest.json
-RUN rm -rf node_modules public/build \
-    && npm install \
-    && npm run build
 
 # Crear base de datos SQLite y asignar permisos totales a Apache
 RUN mkdir -p /var/www/html/database \
@@ -35,11 +39,12 @@ RUN mkdir -p /var/www/html/database \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public \
     && chmod 664 /var/www/html/database/database.sqlite
 
-# Apuntar Apache a la carpeta public
+# Apuntar Apache a la carpeta public de Laravel
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
 
+# Limpieza de caché de Laravel y arranque de Apache
 CMD php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
